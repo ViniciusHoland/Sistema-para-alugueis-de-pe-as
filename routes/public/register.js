@@ -1,8 +1,6 @@
 import express from 'express';
+import bycrypt from 'bcrypt'
 
-
-const app = express();
-//app.use(express.json())
 const router = express.Router()
 
 router.post('/register', async (req,res) => {
@@ -11,7 +9,11 @@ router.post('/register', async (req,res) => {
 
         const { name , email ,password} = req.body
 
-        console.log(name, email, password)
+        const salts = 10 
+
+        const hashPassword = await bycrypt.hash(password,salts)
+
+        console.log(name, email, hashPassword)
 
         res.status(200).json({message: "Funcionando"})
 
