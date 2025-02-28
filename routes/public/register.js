@@ -1,54 +1,56 @@
 import express from 'express';
-import bycrypt from 'bcrypt'
+import bcrypt from 'bcrypt'
+import { z} from 'zod'
 
 import { PrismaClient } from '@prisma/client';
-
 const prisma = new PrismaClient();
 
 const router = express.Router()
+
+const userSchema = z.object({
+    name: z.string().min(3).max(50),
+    email: z.string().email(),
+    password: z.string().min(8).max(255)
+})
 
 router.post('/register', async (req, res) => {
 
     try {
 
+        const result = userSchema.safeParse(req.body)
+
+        if(!result.success){
+            return res.status(400).json({ error: 'Por favor, verifique os dados fornecidos' })
+        }
+
         const { name, email, password } = req.body
 
         const salts = 10
 
-        const hashPassword = await bycrypt.hash(password, salts)
+        if(await prisma.user.findUnique( {where : {email : email}} )){
+            return res.status(400).json({ error: 'Email já cadastrado' })
+        }
 
-        console.log(name, email, hashPassword)
+        const hashPassword = await bcrypt.hash(password, salts)
 
-        res.status(200).json({ message: "Funcionando" })
+        const newUser = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password : hashPassword
+            }
+        })
+
+        res.status(201).json({ message: `Usuario ${name} registrado com sucesso `})
 
     } catch (err) {
         console.error(err)
-        return res.status(500).json({ error: 'error ao cadastrar usuario' })
+        return res.status(500).json({ error: 'erro ao cadastrar usuario' })
     }
 
 
 
 })
-
-
-/*router.get('/', () => {
-
-
-    async function testConnection() {
-        try {
-            await prisma.$connect();
-            console.log("✅ Conexão com o banco de dados estabelecida com sucesso!");
-        } catch (error) {
-            console.error("❌ Erro ao conectar com o banco de dados:", error);
-        } finally {
-            await prisma.$disconnect();
-        }
-    }
-
-    testConnection();
-
-
-})*/
 
 
 
