@@ -14,6 +14,7 @@ model User {
   name      String
   email     String   @unique
   password  String   @unique
+  alugueis Aluguel[]
 }
 
 model Peca {
@@ -21,15 +22,42 @@ model Peca {
   id Int @id @default(autoincrement())
   name String
   valorDiario Decimal @db.Decimal(10,2)
-
+  aluguelItens AluguelItem[]
 }
 
 model Cliente {
   id Int @id @default(autoincrement())
   nome String
+  cpfCnpj String
   email String @unique
   telefone String
   endereco Json
+  alugueis Aluguel[]
 }
 
+model Aluguel {
+  id Int @id @default(autoincrement())
+  clienteId Int 
+  userId Int
+  dataInicio DateTime
+  dataFim DateTime?
+  valorTotal Decimal @db.Decimal(10,2)
+  status String @default("aberto") 
 
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+  aluguelItens AluguelItem []
+}
+
+model AluguelItem {
+
+  id Int @id @default(autoincrement())
+  aluguelId Int
+  pecaId Int
+  quantidade Int
+  precoUnitario Decimal @db.Decimal(10,2)
+
+  aluguel Aluguel @relation(fields: [aluguelId] , references: [id])
+  peca Peca @relation(fields: [pecaId] , references: [id])
+
+}

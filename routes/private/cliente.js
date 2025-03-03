@@ -9,9 +9,9 @@ router.post('/clientes/cadastro', async (req, res ) => {
 
     try{
 
-        const { nome , email, telefone , endereco} = req.body
+        const { nome ,cpfCnpj, email, telefone , endereco} = req.body
 
-        if(!nome || !email || !telefone || !endereco){
+        if(!nome || !cpfCnpj || !email || !telefone || !endereco){
             return res.status(400).json({ error: 'Por favor, preencha todos os campos' })  // Campos vazios
         }
 
@@ -24,6 +24,7 @@ router.post('/clientes/cadastro', async (req, res ) => {
         const newCliente = await prisma.cliente.create({
             data: {
                 nome,
+                cpfCnpj,
                 email,
                 telefone,
                 endereco : {
