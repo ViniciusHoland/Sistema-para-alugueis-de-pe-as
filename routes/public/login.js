@@ -3,16 +3,27 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv'
+import {z } from 'zod'
 
 dotenv.config()
 
 const router = express.Router()
 const prisma = new PrismaClient()
 
+const userSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8, "a senha deve conter mais de 8 digitos").max(255)
+})
 
 router.post('/login', async (req, res) => {
 
     try{
+
+        const result = userSchema.safeParse(req.body)
+
+        if(!result.success){
+            return res.status(400).json({ error: 'Por favor, verifique os dados fornecidos' })
+        }
 
         const { email, password} = req.body
 

@@ -16,3 +16,13 @@ model User {
   password  String   @unique
 }
 
+model Peca {
+
+  id Int @id @default(autoincrement())
+  name String
+  valorDiario Decimal @db.Decimal(10,2)
+
+}
+
+
+
