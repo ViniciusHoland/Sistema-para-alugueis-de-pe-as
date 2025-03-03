@@ -5,7 +5,7 @@ import { pipeline } from 'zod';
 const prisma = new PrismaClient()
 const router = express.Router()
 
-router.post('/registro/pecas', async (req , res ) => {
+router.post('/alugueis/registro', async (req , res ) => {
 
     try{
 
@@ -71,7 +71,70 @@ router.post('/registro/pecas', async (req , res ) => {
 
 })
 
+router.get('/alugueis/:idCliente', async (req, res) => {
 
+    try{
+
+        const {idCliente} = req.params
+
+        const clienteId = parseInt(idCliente)
+
+        if(!clienteId){
+            return res.status(400).json({ error: 'Por favor, passe um id de cliente' })
+        }
+
+        const cliente = await prisma.cliente.findUnique({where: { id : clienteId} })
+
+        if(!cliente){
+            return res.status(400).json({ error: 'cliente nao encontrado' })
+        }
+
+        const alugueis = await prisma.aluguel.findMany({
+            where: {clienteId: clienteId}, 
+            include: {
+                aluguelItens: true,
+                cliente: true,
+                user: true
+            }
+        })
+
+        if(!alugueis){
+            return res.status(404).json({ error: 'Alugueis não encontrados' })
+        }
+
+
+        const nomeCliente = alugueis[0].cliente.nome
+
+        const dadosAlugueis = alugueis.map(aluguel => ({
+
+            dataInicio: aluguel.dataInicio,
+            dataFim: aluguel.dataFim,
+            total: aluguel.valorTotal.toFixed(2),
+            status: aluguel.status,
+            itens: aluguel.aluguelItens.map(item => ({
+                peca: item.name,
+                quantidade: item.quantidade,
+                precoUnitario: item.precoUnitario
+            }))
+        }))
+
+    
+        res.json({
+            cliente: nomeCliente,
+            totalAlugueis: alugueis.length,
+            alugueis: dadosAlugueis
+        })
+
+
+
+    }catch (err){
+        console.error(err)
+        return res.status(500).json({ message: 'Erro ao buscar alugueis' })
+    }
+
+
+
+})
 
 
 export default router
