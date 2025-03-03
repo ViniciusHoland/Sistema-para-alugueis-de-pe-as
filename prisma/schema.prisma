@@ -41,7 +41,7 @@ model Aluguel {
   userId Int
   dataInicio DateTime
   dataFim DateTime?
-  valorTotal Decimal @db.Decimal(10,2)
+  valorTotal Decimal? @db.Decimal(10,2)
   status String @default("aberto") 
 
   cliente Cliente @relation(fields: [clienteId], references: [id])
