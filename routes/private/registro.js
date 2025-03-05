@@ -1,6 +1,5 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
-import { pipeline } from 'zod';
 
 const prisma = new PrismaClient()
 const router = express.Router()
@@ -14,6 +13,10 @@ router.post('/alugueis/registro', async (req , res ) => {
 
         if(!clienteId || !idPeca || !quantidade || !dataInicio  || !dataFim){
             return res.status(400).json({ error: 'Por favor, preencha todos os campos obrigatórios' })
+        }
+
+        if(!await prisma.cliente.findUnique({where: {id: clienteId}})){
+            return res.status(404).json({ error: 'Cliente não encontrado' })
         }
 
         const [dia, mes , ano] = dataInicio.split('/')
@@ -35,20 +38,26 @@ router.post('/alugueis/registro', async (req , res ) => {
         const totalDias = Math.ceil((dataFim - dataInicio) / (1000 * 60 * 60 * 24))
         const valorTotal = (totalDias * peca.valorDiario * quantidade).toFixed(2).toString() 
 
+        const nomedaPeca = peca.name.toString()
+        const precoUnitarioPeca = peca.valorDiario.toFixed(2)
+
+
         const itensAluguel = {
             pecaId: peca.id,
+            nomePeca : nomedaPeca,
             quantidade,
-            precoUnitario: peca.valorDiario
+            precoUnitario: precoUnitarioPeca
         }
 
         
         
-        const newItemAluguel = await prisma.aluguel.create({
+        const newAluguel = await prisma.aluguel.create({
             data: {
               clienteId,
               userId,
               dataInicio,
               dataFim,
+              quantidadeDias: totalDias,
               valorTotal,
               status : "aberto",
               aluguelItens: {
@@ -60,7 +69,7 @@ router.post('/alugueis/registro', async (req , res ) => {
        
 
     
-        res.status(201).json(newItemAluguel)
+        res.status(201).json(newAluguel)
 
 
     } catch(err){
@@ -77,11 +86,11 @@ router.get('/alugueis/:idCliente', async (req, res) => {
 
         const {idCliente} = req.params
 
-        const clienteId = parseInt(idCliente)
-
-        if(!clienteId){
+        if(!idCliente){
             return res.status(400).json({ error: 'Por favor, passe um id de cliente' })
         }
+
+        const clienteId = parseInt(idCliente)
 
         const cliente = await prisma.cliente.findUnique({where: { id : clienteId} })
 
@@ -102,30 +111,30 @@ router.get('/alugueis/:idCliente', async (req, res) => {
             return res.status(404).json({ error: 'Alugueis não encontrados' })
         }
 
-
         const nomeCliente = alugueis[0].cliente.nome
 
         const dadosAlugueis = alugueis.map(aluguel => ({
 
             dataInicio: aluguel.dataInicio,
             dataFim: aluguel.dataFim,
+            quantidadeDias: aluguel.quantidadeDias,
             total: aluguel.valorTotal.toFixed(2),
             status: aluguel.status,
             itens: aluguel.aluguelItens.map(item => ({
-                peca: item.name,
+                peca: item.nomePeca,
                 quantidade: item.quantidade,
-                precoUnitario: item.precoUnitario
+                precoUnitario: item.precoUnitario.toFixed(2)
             }))
         }))
 
     
-        res.json({
+        res.status(200).json({
             cliente: nomeCliente,
             totalAlugueis: alugueis.length,
             alugueis: dadosAlugueis
         })
 
-
+    
 
     }catch (err){
         console.error(err)

@@ -41,6 +41,7 @@ model Aluguel {
   userId Int
   dataInicio DateTime
   dataFim DateTime?
+  quantidadeDias Int 
   valorTotal Decimal? @db.Decimal(10,2)
   status String @default("aberto") 
 
@@ -54,6 +55,7 @@ model AluguelItem {
   id Int @id @default(autoincrement())
   aluguelId Int
   pecaId Int
+  nomePeca String
   quantidade Int
   precoUnitario Decimal @db.Decimal(10,2)
 

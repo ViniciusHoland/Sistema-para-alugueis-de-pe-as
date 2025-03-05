@@ -13,8 +13,8 @@ dotenv.config()
 
 app.use(register)
 app.use(login)
-app.use(auth,pecas)
-app.use(auth,cliente)
+app.use(pecas)
+app.use(cliente)
 app.use(auth, registro)
 
 app.listen(process.env.PORT || 3000, () => {
