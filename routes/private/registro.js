@@ -141,9 +141,58 @@ router.get('/alugueis/:idCliente', async (req, res) => {
         return res.status(500).json({ message: 'Erro ao buscar alugueis' })
     }
 
+})
 
+router.get('/alugueis', async (req, res) => {
+
+    try{
+
+        
+        const alugueis = await prisma.aluguel.findMany({ 
+            include: {
+                aluguelItens: true,
+                cliente: true,
+                user: true
+            }
+        })
+
+        if(!alugueis){
+            return res.status(404).json({ error: 'Alugueis não encontrados' })
+        }
+       
+        const dadosAlugueis = alugueis.map(aluguel => ({
+
+            nomeCliente: aluguel.cliente.nome,
+            dataInicio: aluguel.dataInicio,
+            dataFim: aluguel.dataFim,
+            quantidadeDias: aluguel.quantidadeDias,
+            valorTotal: aluguel.valorTotal.toFixed(2),
+            status: aluguel.status,
+            itens: aluguel.aluguelItens.map(item => ({
+                peca: item.nomePeca,
+                quantidade: item.quantidade,
+                precoUnitario: item.precoUnitario.toFixed(2)
+            }))
+        }))
+
+        
+    
+        res.status(200).json({
+            totalAlugueis: alugueis.length,
+            alugueis: dadosAlugueis
+        })
+
+    
+
+    }catch (err){
+        console.error(err)
+        return res.status(500).json({ message: 'Erro ao buscar alugueis' })
+    }
 
 })
+
+
+
 
 
 export default router
