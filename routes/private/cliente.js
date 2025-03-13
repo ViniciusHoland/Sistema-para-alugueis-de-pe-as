@@ -15,9 +15,9 @@ router.post('/clientes/cadastro', async (req, res ) => {
             return res.status(400).json({ error: 'Por favor, preencha todos os campos' })  // Campos vazios
         }
 
-        const user = await prisma.cliente.findUnique({where:{email: email}})
+        const cliente = await prisma.cliente.findUnique({where:{email: email}})
     
-        if(user){
+        if(cliente){
             return res.status(400).json({ error: 'Email já cadastrado' })  // Email já cadastrado
         }
 

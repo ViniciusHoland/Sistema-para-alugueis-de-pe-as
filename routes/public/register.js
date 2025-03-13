@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt'
 import { z} from 'zod'
 
+
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
@@ -20,17 +21,17 @@ router.post('/register', async (req, res) => {
         const result = userSchema.safeParse(req.body)
 
         if(!result.success){
-            return res.status(400).json({ error: 'Por favor, verifique os dados fornecidos' })
+            return res.status(400).json({ error: 'Por favor, verifique os dados fornecidos para registro de usuario' })
         }
 
         const { name, email, password } = req.body
 
-        const salts = 10
-
         if(await prisma.user.findUnique( {where : {email : email}} )){
             return res.status(400).json({ error: 'Email já cadastrado' })
         }
-
+        
+        
+        const salts = 10
         const hashPassword = await bcrypt.hash(password, salts)
 
         const newUser = await prisma.user.create({

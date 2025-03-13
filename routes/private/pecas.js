@@ -23,7 +23,7 @@ router.post('/pecas/cadastro', async (req , res) => {
             }
         })
 
-        res.status(201).json({message: `Peça cadastrada com sucesso ${newPeca}`})
+        res.status(201).json({message: `Peça cadastrada com sucesso `, novaPeca : newPeca})
 
     } catch (err) {
         console.error(err)

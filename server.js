@@ -6,9 +6,11 @@ import pecas from './routes/private/pecas.js'
 import auth  from './midllewares/auth.js'
 import cliente from './routes/private/cliente.js'
 import registro from './routes/private/registro.js'
+import cors from 'cors'
 
 const app = express()
 app.use(express.json())
+app.use(cors())
 dotenv.config()
 
 app.use(register)
