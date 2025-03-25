@@ -119,23 +119,7 @@ router.get('/alugueis/cliente/:idCliente', async (req, res) => {
 
         const nomeCliente = alugueis[0].cliente.nome
 
-        const dadosAlugueis = alugueis.map(aluguel => ({
-
-            idAluguel: aluguel.id,
-            nomeCliente: aluguel.cliente.nome,
-            endereco: aluguel.cliente.endereco,
-            telefone: aluguel.cliente.telefone,
-            dataInicio: aluguel.dataInicio,
-            dataFim: aluguel.dataFim,
-            quantidadeDias: aluguel.quantidadeDias,
-            total: aluguel.valorTotal.toFixed(2),
-            status: aluguel.status,
-            itens: aluguel.aluguelItens.map(item => ({
-                peca: item.nomePeca,
-                quantidade: item.quantidade,
-                precoUnitario: item.precoUnitario.toFixed(2)
-            }))
-        }))
+        const dadosAlugueis = retornarDadosDeAlugueis(alugueis)
 
 
         res.status(200).json({
@@ -153,6 +137,49 @@ router.get('/alugueis/cliente/:idCliente', async (req, res) => {
 
 })
 
+function retornarDadosDeAlugueis(alugueis) {
+
+    return alugueis.map(aluguel => ({
+
+
+        status: aluguel.status,
+        idCliente: aluguel.cliente.id,
+        endereco: aluguel.cliente.endereco,
+        telefone: aluguel.cliente.telefone,
+        idAluguel: aluguel.id,
+        nomeCliente: aluguel.cliente.nome,
+        dataInicio: aluguel.dataInicio,
+        dataFim: aluguel.dataFim,
+        quantidadeDias: aluguel.quantidadeDias,
+        valorTotal: aluguel.valorTotal.toFixed(2),
+        status: aluguel.status,
+        itens: aluguel.aluguelItens.map(item => {
+
+            let precoUnitario = item.precoUnitario
+
+            if (aluguel.quantidadeDias > 30) {
+                precoUnitario = 0.60;
+            } else if (aluguel.quantidadeDias > 15) {
+                precoUnitario = 0.80;
+            } else {
+                precoUnitario = item.precoUnitario; // Mantém o valor original
+            }
+            return {
+                idPeca: item.pecaId,
+                peca: item.nomePeca,
+                quantidade: item.quantidade,
+                precoUnitario: precoUnitario.toFixed(2)
+            }
+
+        })
+
+    })
+
+    )
+
+
+}
+
 
 router.get('/alugueis', async (req, res) => {
 
@@ -167,36 +194,22 @@ router.get('/alugueis', async (req, res) => {
             }
         })
 
-        
+
 
         if (!alugueis) {
             return res.status(404).json({ error: 'Alugueis não encontrados' })
         }
 
+        let totalAlugueis = 0
 
-        const dadosAlugueis = alugueis.map(aluguel => ({
 
-            status: aluguel.status,
-            idCliente: aluguel.cliente.id,
-            idAluguel: aluguel.id,
-            nomeCliente: aluguel.cliente.nome,
-            dataInicio: aluguel.dataInicio,
-            dataFim: aluguel.dataFim,
-            quantidadeDias: aluguel.quantidadeDias,
-            valorTotal: aluguel.valorTotal.toFixed(2),
-            status: aluguel.status,
-            itens: aluguel.aluguelItens.map(item => ({
-                idPeca: item.pecaId,
-                peca: item.nomePeca,
-                quantidade: item.quantidade,
-                precoUnitario: item.precoUnitario.toFixed(2)
-            }))
-        }))
+        const dadosAlugueis = retornarDadosDeAlugueis(alugueis)
 
-        res.status(200).json({
-            totalAlugueis: alugueis.length,
-            alugueis: dadosAlugueis
-        })
+
+            res.status(200).json({
+                totalAlugueis: alugueis.length,
+                alugueis: dadosAlugueis
+            })
 
 
     } catch (err) {
@@ -219,9 +232,9 @@ router.put('/alugueis/:aluguelId', async (req, res) => {
 
         const idAluguel = parseInt(aluguelId)
 
-        const aluguel = await prisma.aluguel.findUnique({ 
+        const aluguel = await prisma.aluguel.findUnique({
             where: { id: idAluguel },
-            include : {aluguelItens: true} 
+            include: { aluguelItens: true }
         })
 
         if (!aluguel) {
@@ -273,14 +286,14 @@ router.put('/alugueis/:aluguelId', async (req, res) => {
                 quantidadeDias: totalDias,
                 status: "aberto",
                 aluguelItens: {
-                    updateMany:{
-                        where: {aluguelId: idAluguel},
+                    updateMany: {
+                        where: { aluguelId: idAluguel },
                         data: {
-                            quantidade: quantidade, 
+                            quantidade: quantidade,
                             precoUnitario: peca.valorDiario
                         }
                     }
-                
+
                 }
             }
         })
@@ -306,6 +319,8 @@ router.put('/alugueis/status/:aluguelId', async (req, res) => {
 
         const aluguel = await prisma.aluguel.findUnique({ where: { id: idAluguel } })
 
+        console.log(aluguel)
+
         if (aluguel.status === "aberto") {
             const updateAluguel = await prisma.aluguel.update({
                 where: { id: idAluguel },
@@ -314,7 +329,13 @@ router.put('/alugueis/status/:aluguelId', async (req, res) => {
                 }
 
             })
+
+            res.status(200).json(updateAluguel)
+        } else {
+            return res.status(400).json({ message: "aluguel já está fechado" })
         }
+
+
     } catch (err) {
         console.error(err)
         return res.status(500).json({ message: 'Erro ao fechar aluguel' })
