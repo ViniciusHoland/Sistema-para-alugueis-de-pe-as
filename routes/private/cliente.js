@@ -44,4 +44,31 @@ router.post('/clientes/cadastro', async (req, res ) => {
 
 })
 
+router.get('/clientes/busca', async (req,res) => {
+    try{
+
+        const {nome} = req.query
+
+        if(!nome){
+            return res.status(400).json({ error: 'Por favor, passe um nome de cliente' })
+        }
+
+        const clientes = await prisma.cliente.findMany({
+            where: {
+                nome: {
+                    contains: nome,
+                    //mode: 'insensitive'
+                }
+            }
+        })
+
+        res.status(200).json(clientes)
+
+    } catch (err) {
+        console.error(err)
+        return res.status(500).json({ message: 'Erro ao buscar clientes' })
+    }
+})
+
+
 export default router
